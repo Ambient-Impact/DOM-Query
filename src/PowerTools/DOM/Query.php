@@ -545,8 +545,8 @@ class DOM_Query {
 
         // If no selector is specified, return an empty set.
         if (
-            DOM_Helper::getType($selector) !== 'String' ||
-            trim(mb_strlen($selector)) === 0
+            DOM_Helper::getType($selector)  !== 'String' ||
+            trim(mb_strlen($selector))      === 0
         ) {
             $this->nodes = array();
 
