@@ -770,20 +770,77 @@ class DOM_Query {
 
     public function parents($selector = false) {
         // http://api.jquery.com/parents/
-        $ancestors = array();
-        foreach ($this->nodes as $node) {
-            $parent = $this->select($node)->parent($selector);
-            if ($parent->nodes[0] !== $this->DOM) {
-                $nodes = $this->select($parent)->parents()->nodes;
-                array_unshift($nodes, $parent->nodes[0]);
-                $ancestors = DOM_Helper::merge($ancestors, $nodes);
-            }
+
+        $ancestorSets   = array();
+        $ancestors      = array();
+
+        // Check if this looks like a selector, and cache that to avoid checking
+        // on every loop.
+        if (
+            DOM_Helper::getType($selector) === 'String' &&
+            trim(mb_strlen($selector)) > 0
+        ) {
+            $useSelector = true;
+        } else {
+            $useSelector = false;
         }
+
+        foreach ($this->nodes as $node) {
+            // Grab the parent node, but don't pass the selector so that we can
+            // get the parent of this parent.
+            $parent         = $this->select($node)->parent();
+
+            $nodes          = array();
+
+            while ($parent->nodes[0] !== $this->DOM) {
+                // If a selector was specified, filter out any parents that
+                // don't match, otherwise add this parent unconditionally.
+                if (
+                    $useSelector            === false   ||
+                    $useSelector            === true    &&
+                    $parent->is($selector)  === true
+                ) {
+                    $nodes[] = $parent->nodes[0];
+                }
+
+                // Select the parent of this parent, moving up the tree.
+                $parent = $parent->parent();
+            }
+
+            // Save each set of parents as a new sub-array, so we can reverse
+            // the root array as per the jQuery.parents() method.
+            $ancestorSets[] = $nodes;
+        }
+
+        // Merge each ancestor set into the $ancestors array, with the sets in
+        // reverse document order, as per the jQuery.parents() method.
+        foreach (array_reverse($ancestorSets) as $set) {
+            $ancestors = DOM_Helper::merge($ancestors, $set);
+        }
+
         return $this->select($ancestors);
     }
 
     public function parent($selector = false) {
         // http://api.jquery.com/parent/
-        return $this->select($this->_runGetter($this, '_getValue', 'parentNode', false));
+
+        $parents = &$this->select(
+            $this->_runGetter($this, '_getValue', 'parentNode', false)
+        );
+
+        // If a selector was specified, filter out any parents that don't match.
+        if (
+            DOM_Helper::getType($selector) === 'String' &&
+            trim(mb_strlen($selector)) > 0
+        ) {
+            foreach ($parents->nodes as $i => &$node) {
+                if (!$this->select($node)->is($selector)) {
+                    unset($parents->nodes[$i]);
+                }
+
+            }
+        }
+
+        return $parents;
     }
 }
