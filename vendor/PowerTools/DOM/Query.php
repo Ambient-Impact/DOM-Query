@@ -540,6 +540,37 @@ class DOM_Query {
 
     public function closest($selector = false) {
         // http://api.jquery.com/closest/
+
+        $results = array();
+
+        // If no selector is specified, return an empty set.
+        if (
+            DOM_Helper::getType($selector)  !== 'String' ||
+            trim(mb_strlen($selector))      === 0
+        ) {
+            $this->nodes = array();
+
+            return $this;
+        }
+
+        foreach ($this->nodes as $node) {
+            $testElement = $node;
+
+            // Loop up through the tree, testing each element for the selector,
+            // including the starting element, breaking on the first one found.
+            while ($testElement !== $this->DOM) {
+                if ($this->select($testElement)->is($selector)) {
+                    $results[] = $testElement;
+
+                    break;
+                }
+
+                // Move up to this element's parent.
+                $testElement = $this->select($testElement)->parent()->nodes[0];
+            }
+        }
+
+        return $this->select($results);
     }
 
     public function void() {
