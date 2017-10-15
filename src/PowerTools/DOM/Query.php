@@ -763,7 +763,8 @@ class DOM_Query {
     public function parents($selector = false) {
         // http://api.jquery.com/parents/
 
-        $ancestors = array();
+        $ancestorSets   = array();
+        $ancestors      = array();
 
         // Check if this looks like a selector, and cache that to avoid checking
         // on every loop.
@@ -779,7 +780,9 @@ class DOM_Query {
         foreach ($this->nodes as $node) {
             // Grab the parent node, but don't pass the selector so that we can
             // get the parent of this parent.
-            $parent = $this->select($node)->parent();
+            $parent         = $this->select($node)->parent();
+
+            $nodes          = array();
 
             while ($parent->nodes[0] !== $this->DOM) {
                 // If a selector was specified, filter out any parents that
@@ -789,13 +792,22 @@ class DOM_Query {
                     $useSelector            === true    &&
                     $parent->is($selector)  === true
                 ) {
-                    $nodes      = array($parent);
-                    $ancestors  = DOM_Helper::merge($ancestors, $nodes);
+                    $nodes[] = $parent->nodes[0];
                 }
 
                 // Select the parent of this parent, moving up the tree.
                 $parent = $parent->parent();
             }
+
+            // Save each set of parents as a new sub-array, so we can reverse
+            // the root array as per the jQuery.parents() method.
+            $ancestorSets[] = $nodes;
+        }
+
+        // Merge each ancestor set into the $ancestors array, with the sets in
+        // reverse document order, as per the jQuery.parents() method.
+        foreach (array_reverse($ancestorSets) as $set) {
+            $ancestors = DOM_Helper::merge($ancestors, $set);
         }
 
         return $this->select($ancestors);
