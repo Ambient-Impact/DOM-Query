@@ -122,6 +122,7 @@ $sitefooter->wrap('<section><div class="footer-wrapper"></div></section>');
 - [x] [$selection.removeClass](http://api.jquery.com/removeClass/)
 - [x] [$selection.text](http://api.jquery.com/text/)
 - [x] [$selection.wrap](http://api.jquery.com/wrap/)
+- [x] [$selection.unwrap](http://api.jquery.com/unwrap/)
 
 -----
 
