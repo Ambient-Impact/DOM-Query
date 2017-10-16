@@ -797,6 +797,58 @@ class DOM_Query {
         return $this;
     }
 
+    public function unwrap($selector = false) {
+        // http://api.jquery.com/unwrap/
+
+        $nodesToUnwrap    = array();
+
+        // Check if this looks like a selector, and cache that to avoid checking
+        // on every loop.
+        if (
+            DOM_Helper::getType($selector) === 'String' &&
+            trim(mb_strlen($selector)) > 0
+        ) {
+            $useSelector = true;
+        } else {
+            $useSelector = false;
+        }
+
+        // Build an array of unique nodes to unwrap that match the selector (if
+        // specified).
+        foreach ($this->nodes as $node) {
+            if (
+                $node !== $this->DOM &&
+                DOM_Helper::getType($node) === 'DOMElement' &&
+                (
+                    $useSelector                        === false   ||
+                    $useSelector                        === true    &&
+                    $this->select($node)->is($selector) === true
+                )
+            ) {
+                $nodeArray = array($node);
+
+                $nodesToUnwrap = DOM_Helper::merge(
+                    $nodesToUnwrap, $nodeArray
+                );
+            }
+        }
+
+        // Grab the contents of each node and insert them one by one right
+        // before the node's next sibling, which preserves the order of the
+        // contents, then remove the node.
+        foreach ($nodesToUnwrap as $node) {
+            foreach ($this->select($node)->contents()->nodes as $childNode) {
+                $node->parentNode->insertBefore(
+                    $childNode, $node->nextSibling
+                );
+            }
+
+            $this->select($node)->remove();
+        }
+
+        return $this;
+    }
+
     public function render($echo = true) {
         if (!$echo) {
             Buffer::push();
