@@ -121,9 +121,15 @@ class DOM_Query {
     }
 
     public function _each($function) {
+        // http://api.jquery.com/each/
+
         $select = $this->select($this->nodes);
         for ($i = count($select->nodes) - 1; $i > -1; $i--) {
-            $function($i, $this->select($select->nodes[$i]));
+            // Stop the loop if the callback returns false as per the jQuery
+            // method.
+            if ($function($i, $this->select($select->nodes[$i])) === false) {
+                break;
+            }
         }
         return $select;
     }
@@ -535,6 +541,7 @@ class DOM_Query {
     }
 
     public function each($function) {
+        // http://api.jquery.com/each/
         return $this->_each($function);
     }
 
