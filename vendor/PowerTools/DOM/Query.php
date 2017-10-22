@@ -858,6 +858,36 @@ class DOM_Query {
         echo $this;
     }
 
+    public function renderContents($echo = false) {
+        $output = '';
+
+        if (!empty($this->nodes)) {
+            $elements = $this;
+        } else {
+            if ($this->isHtml === true) {
+                $elements = $this->select('body');
+            } else {
+                $elements = $this;
+            }
+        }
+
+        foreach ($elements->contents()->nodes as $node) {
+            // Render only the specified node as HTML/XML:
+            // https://stackoverflow.com/a/12909924/6513652
+            if ($elements->isHtml === true) {
+                $output .= $node->ownerDocument->saveHTML($node);
+            } else {
+                $output .= $node->ownerDocument->saveXML($node);
+            }
+        }
+
+        if ($echo === true) {
+            print($output);
+        } else {
+            return $output;
+        }
+    }
+
     public function parents($selector = false) {
         // http://api.jquery.com/parents/
 
